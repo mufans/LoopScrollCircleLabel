@@ -1,4 +1,4 @@
-package widget.mufans.com.loopscrollcirclelabel;
+package com.mufans.loopscrollcirclelabel;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,13 +10,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(widget.mufans.com.loopscrollcirclelabel.R.layout.activity_main);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        getMenuInflater().inflate(widget.mufans.com.loopscrollcirclelabel.R.menu.menu_main, menu);
         return true;
     }
 
@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == widget.mufans.com.loopscrollcirclelabel.R.id.action_settings) {
             return true;
         }
 
