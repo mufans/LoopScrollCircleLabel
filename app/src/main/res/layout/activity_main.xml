@@ -8,76 +8,10 @@
     <TextView android:text="@string/hello_world" android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
     <com.mufans.loopscrollcirclelabel.LooperScrollContainer
+        android:id="@+id/looperSrollContainer"
         android:layout_width="match_parent"
         android:layout_centerInParent="true"
         android:layout_height="wrap_content">
-        <RelativeLayout
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:background="@drawable/circle">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:textColor="@android:color/white"
-                android:textSize="20sp"
-                android:text="circle1" />
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:background="@drawable/circle1">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="circle2"
-                android:textColor="@android:color/white"
-                android:textSize="20sp" />
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:background="@drawable/circle2">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:textColor="@android:color/white"
-                android:textSize="20sp"
-                android:text="circle3" />
-        </RelativeLayout>
-        <RelativeLayout
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:background="@drawable/circle3">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:textColor="@android:color/white"
-                android:textSize="20sp"
-                android:text="circle4" />
-        </RelativeLayout>
-        <RelativeLayout
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:background="@drawable/circle4">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:textColor="@android:color/white"
-                android:textSize="20sp"
-                android:text="circle5" />
-        </RelativeLayout>
 
     </com.mufans.loopscrollcirclelabel.LooperScrollContainer>
 

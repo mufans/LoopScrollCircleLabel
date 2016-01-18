@@ -16,11 +16,13 @@ import java.util.List;
 /**
  * Created by liujun on 16-1-16.
  * 循环滚动的容器
+ * TODO:1.实现相邻圆缩放时相切 2.根据离中心距离缩放 3.处理viewlist的size<SCREEN_SHOW_COUNT的情况 4.缩放参数作为自定义属性
  */
 public class LooperScrollContainer extends ViewGroup {
 
     private static final String TAG = LooperScrollContainer.class.getName();
 
+    private static final int SCREEN_SHOW_COUNT = 5;
     private static final float SCALE_FACTOR = 0.2f; //缩放倍率
     private static final int STATUS_REST = 0;
     private static final int STATUS_MOVE = 1;
@@ -35,6 +37,11 @@ public class LooperScrollContainer extends ViewGroup {
     private int downX, downY;
     private int lastX, lastY;
     private int touchSlop;
+    private boolean canLoop;
+    private int maxCount;
+    private int firstVisiblePos;
+
+    private LooperAdapterWrapper looperAdapterWrapper;
 
     private List<View> viewlist = new LinkedList<>();
 
@@ -55,16 +62,23 @@ public class LooperScrollContainer extends ViewGroup {
 
     private void init(Context context) {
         touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
+        selectedPos = 2;
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        measureChildren(widthMeasureSpec, heightMeasureSpec);
+
+        // measureChildren(widthMeasureSpec, heightMeasureSpec);
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
+
+        childWidth = width / SCREEN_SHOW_COUNT;
+        childHeight = childWidth;
+        measureChildren(MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY));
+
         if (getChildCount() > 0) {
-            childWidth = getChildAt(0).getMeasuredWidth();
-            childHeight = getChildAt(0).getMeasuredHeight();
+//            childWidth = getChildAt(0).getMeasuredWidth();
+//            childHeight = getChildAt(0).getMeasuredHeight();
             height = (int) (childHeight * SCALE_FACTOR + childHeight + 0.5f);
         }
         setMeasuredDimension(width, height);
@@ -76,7 +90,7 @@ public class LooperScrollContainer extends ViewGroup {
         int height = getMeasuredHeight();
         int centerX = width / 2;
         int centerY = height / 2;
-        int left = centerX - childWidth / 2;
+        int left = -1 * childWidth;//0;//centerX - childWidth / 2;
         int top = centerY - childHeight / 2;
         int frontIndex = 0;
         float maxRatio = 0;
@@ -201,14 +215,7 @@ public class LooperScrollContainer extends ViewGroup {
 
     private void moveBy(int deltaX) {
         offsetX += deltaX;
-        Log.d(TAG, "moveBy:" + deltaX);
-        selectedPos = (-2) * offsetX / childWidth;
-        if (selectedPos < 0) {
-            selectedPos = 0;
-        } else if (selectedPos > getChildCount() - 1) {
-            selectedPos = getChildCount() - 1;
-        }
-        Log.d(TAG, "selectedPos:" + selectedPos);
+        adjustViewOrder();
         requestLayout();
     }
 
@@ -219,21 +226,83 @@ public class LooperScrollContainer extends ViewGroup {
         Log.d(TAG, "retainX:" + retainX);
         if (Math.abs(retainX) > childWidth / 2) {
             Log.d(TAG, "retainX:>");
-            to -= childWidth + retainX;
+            if (retainX > 0) {
+                to += childWidth - retainX;
+            } else {
+                to -= childWidth + retainX;
+            }
         } else {
             Log.d(TAG, "retainX:<");
             to -= retainX;
+
+
         }
+
         ValueAnimator valueAnimator = ValueAnimator.ofInt(from, to);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 offsetX = (int) animation.getAnimatedValue();
+                if (animation.getAnimatedFraction() == 1) {
+                    adjustViewOrder();
+                    offsetX = 0;
+                }
                 requestLayout();
             }
         });
         valueAnimator.setDuration(300);
         valueAnimator.setInterpolator(new LinearInterpolator());
         valueAnimator.start();
+    }
+
+    private void adjustViewOrder() {
+        View view = null;
+        if (offsetX <= -1 * childWidth) {
+            view = viewlist.get(0);
+            viewlist.remove(0);
+            viewlist.add(view);
+            offsetX += childWidth;
+            selectedPos++;
+        } else if (offsetX >= childWidth) {
+            view = viewlist.remove(viewlist.size() - 1);
+            viewlist.add(0, view);
+            offsetX -= childWidth;
+            selectedPos--;
+        }
+
+        int dataCount = looperAdapterWrapper.getDataCount();
+
+        Log.d(TAG, "anim:before" + selectedPos);
+        if (selectedPos >= dataCount) {
+            selectedPos = 0;
+        } else if (selectedPos < 0) {
+
+            selectedPos += dataCount;
+        }
+
+        firstVisiblePos = selectedPos - 2;
+        if (firstVisiblePos < 0) {
+            firstVisiblePos += dataCount;
+        }
+        if (view != null) {
+            int pos = viewlist.indexOf(view);
+            Log.d(TAG, "anim:" + selectedPos + ":" + firstVisiblePos + ":" + pos);
+            looperAdapterWrapper.getItemView(pos, firstVisiblePos, view, LooperScrollContainer.this);
+        }
+
+
+    }
+
+    public void setAdapter(BaseAdapter adapter) {
+        viewlist.clear();
+        removeAllViews();
+        looperAdapterWrapper = new LooperAdapterWrapper(SCREEN_SHOW_COUNT, adapter);
+        for (int i = 0; i < looperAdapterWrapper.getCount(); i++) {
+            View itemView = looperAdapterWrapper.getItemView(i, firstVisiblePos, null, this);
+            viewlist.add(itemView);
+            addView(itemView);
+        }
+        offsetX = 0;
+        requestLayout();
     }
 }
