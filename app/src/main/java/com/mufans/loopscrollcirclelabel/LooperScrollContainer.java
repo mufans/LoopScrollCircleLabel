@@ -16,14 +16,14 @@ import java.util.List;
 /**
  * Created by liujun on 16-1-16.
  * 循环滚动的容器
- * TODO:1.实现相邻圆缩放时相切 2.根据离中心距离缩放 3.处理viewlist的size<SCREEN_SHOW_COUNT的情况 4.缩放参数作为自定义属性
+ * TODO:1.实现相邻圆缩放时相切 2.处理viewlist的size<SCREEN_SHOW_COUNT的情况 3.缩放参数作为自定义属性
  */
 public class LooperScrollContainer extends ViewGroup {
 
     private static final String TAG = LooperScrollContainer.class.getName();
 
     private static final int SCREEN_SHOW_COUNT = 5;
-    private static final float SCALE_FACTOR = 0.2f; //缩放倍率
+    private static final float SCALE_FACTOR = 0.4f; //缩放倍率
     private static final int STATUS_REST = 0;
     private static final int STATUS_MOVE = 1;
 
@@ -40,6 +40,7 @@ public class LooperScrollContainer extends ViewGroup {
     private boolean canLoop;
     private int maxCount;
     private int firstVisiblePos;
+    private int retainWidth; //容器宽度根据显示的个数等分的余数
 
     private LooperAdapterWrapper looperAdapterWrapper;
 
@@ -68,12 +69,13 @@ public class LooperScrollContainer extends ViewGroup {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 
-        // measureChildren(widthMeasureSpec, heightMeasureSpec);
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
 
         childWidth = width / SCREEN_SHOW_COUNT;
         childHeight = childWidth;
+        retainWidth = width - childWidth * SCREEN_SHOW_COUNT;
+        Log.d("measurewidth", childWidth + "," + width + "," + childWidth * SCREEN_SHOW_COUNT);
         measureChildren(MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY));
 
         if (getChildCount() > 0) {
@@ -90,35 +92,30 @@ public class LooperScrollContainer extends ViewGroup {
         int height = getMeasuredHeight();
         int centerX = width / 2;
         int centerY = height / 2;
-        int left = -1 * childWidth;//0;//centerX - childWidth / 2;
+        int left = -1 * childWidth;
         int top = centerY - childHeight / 2;
-        int frontIndex = 0;
         float maxRatio = 0;
         for (int i = 0; i < getChildCount(); i++) {
             View child = viewlist.get(i);
-
-//                if (selectedPos == i) {
-//                    //child.bringToFront();
-//                    child.setScaleX(SCALE_FACTOR);
-//                    child.setScaleY(SCALE_FACTOR);
-//                } else {
-//                    child.setScaleX(1);
-//                    child.setScaleY(1);
-//                }
-
             if (i == 0) {
                 left += offsetX;
             } else {
                 left += childWidth;
             }
 
+            //中间相邻的childView添加间距，调整无法填满的情况
+            if (i == getChildCount() / 2 || i == getChildCount() / 2 + 1) {
+                left += retainWidth / 2;
+            }
+
             int distance = Math.abs(centerX - (left + childWidth / 2));
-
-            float scaleRatio = distance > childWidth ? 1 : 1 + (childWidth - distance) * 1.0f / childWidth * SCALE_FACTOR;
-
+            int scaleDistance = width / 2 - childWidth / 2;
+            float scaleRatio = 1 + (scaleDistance - distance) * 1.0f / scaleDistance * SCALE_FACTOR;
             if (maxRatio < scaleRatio) {
                 maxRatio = scaleRatio;
-                frontIndex = i;
+            }
+            if (scaleRatio < 1) {
+                scaleRatio = 1;
             }
             Log.d(TAG, "scaleRatio:" + scaleRatio);
             child.setScaleY(scaleRatio);
@@ -127,8 +124,22 @@ public class LooperScrollContainer extends ViewGroup {
             child.layout(left, top, left + childWidth, top + childHeight);
         }
 
-        viewlist.get(frontIndex).bringToFront();
+        reorderZ();
 
+
+    }
+
+    /**
+     * 调整层级
+     */
+    private void reorderZ() {
+        int centerIndex = getChildCount() / 2;
+        for (int i = 1; i < centerIndex; i++) {
+            viewlist.get(i).bringToFront();
+        }
+        for (int i = viewlist.size() - 2; i >= centerIndex; i--) {
+            viewlist.get(i).bringToFront();
+        }
     }
 
     @Override
