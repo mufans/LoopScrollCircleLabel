@@ -2,6 +2,7 @@ package com.mufans.loopscrollcirclelabel;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -23,6 +24,7 @@ public class LooperScrollContainer extends ViewGroup {
     private static final String TAG = LooperScrollContainer.class.getName();
 
     private static final int SCREEN_SHOW_COUNT = 5;
+
     private static final float SCALE_FACTOR = 0.4f; //缩放倍率
     private static final int STATUS_REST = 0;
     private static final int STATUS_MOVE = 1;
@@ -47,17 +49,18 @@ public class LooperScrollContainer extends ViewGroup {
     private List<View> viewlist = new LinkedList<>();
 
     public LooperScrollContainer(Context context) {
-        super(context);
-        init(context);
+        this(context, null);
     }
 
     public LooperScrollContainer(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init(context);
+        this(context, attrs, 0);
     }
 
     public LooperScrollContainer(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.LooperScrollContainer);
+        maxCount = typedArray.getInt(R.styleable.LooperScrollContainer_max_visible_count, SCREEN_SHOW_COUNT);
+        typedArray.recycle();
         init(context);
     }
 
@@ -72,10 +75,10 @@ public class LooperScrollContainer extends ViewGroup {
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
 
-        childWidth = width / SCREEN_SHOW_COUNT;
+        childWidth = width / maxCount;
         childHeight = childWidth;
-        retainWidth = width - childWidth * SCREEN_SHOW_COUNT;
-        Log.d("measurewidth", childWidth + "," + width + "," + childWidth * SCREEN_SHOW_COUNT);
+        retainWidth = width - childWidth * maxCount;
+        Log.d("measurewidth", childWidth + "," + width + "," + childWidth * maxCount);
         measureChildren(MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY));
 
         if (getChildCount() > 0) {
@@ -295,11 +298,6 @@ public class LooperScrollContainer extends ViewGroup {
         if (firstVisiblePos < 0) {
             firstVisiblePos += dataCount;
         }
-        if (view != null) {
-            int pos = viewlist.indexOf(view);
-            Log.d(TAG, "anim:" + selectedPos + ":" + firstVisiblePos + ":" + pos);
-            looperAdapterWrapper.getItemView(pos, firstVisiblePos, view, LooperScrollContainer.this);
-        }
 
 
     }
@@ -307,7 +305,11 @@ public class LooperScrollContainer extends ViewGroup {
     public void setAdapter(BaseAdapter adapter) {
         viewlist.clear();
         removeAllViews();
-        looperAdapterWrapper = new LooperAdapterWrapper(SCREEN_SHOW_COUNT, adapter);
+        //调整屏幕可见个数
+        if (maxCount > adapter.getCount()) {
+            maxCount = adapter.getCount();
+        }
+        looperAdapterWrapper = new LooperAdapterWrapper(maxCount, adapter);
         for (int i = 0; i < looperAdapterWrapper.getCount(); i++) {
             View itemView = looperAdapterWrapper.getItemView(i, firstVisiblePos, null, this);
             viewlist.add(itemView);

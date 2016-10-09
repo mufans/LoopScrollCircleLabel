@@ -15,15 +15,13 @@ public abstract class BaseAdapter {
      * @return
      */
     public abstract int getCount();
-
+//
     /**
      * 获取itemView
      *
      * @param pos
      * @param itemView
-     * @param containerView
-     * @return
+     * @param containerView * @return
      */
     public abstract View getItemView(int pos, View itemView, ViewGroup containerView);
-
 }
